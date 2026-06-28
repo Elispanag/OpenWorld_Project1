@@ -13,10 +13,12 @@ public class SmartAI : MonoBehaviour
 
     // --- AI STATS (Internal state of the AI) ---
     [Header("AI Stats")]
+    public float speed = 4f;          // The speed of the NPC
     public float energy = 100f;        // The energy of the NPC (starts full)
     public float wealth = 0f;          // How many resources has collected
     public float detectionRadius = 6f; // How close the player needs to be for the NPC to flee
 
+    private Transform targetStar; // The closest star to the NPC
     // enumeration for the states of the NPC
     private enum AIState { Gathering, Resting, Fleeing }
     [SerializeField] private AIState currentState = AIState.Gathering;
@@ -25,6 +27,10 @@ public class SmartAI : MonoBehaviour
     {
         // We get the NavMeshAgent component that we attached to the object
         agent = GetComponent<NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.speed = speed;
+        }
     }
 
     void Update()
@@ -52,12 +58,16 @@ public class SmartAI : MonoBehaviour
     // Evaluates the environment and changes the NPC's state
     void EvaluateSituation()
     {
+
         // EVALUATION 1: Player proximity (Safety)
-        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-        if (distanceToPlayer < detectionRadius)
+        if (playerTransform != null)
         {
-            currentState = AIState.Fleeing;
-            return; // Stops evaluating further conditions, safety takes precedence!
+            float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            if (distanceToPlayer < detectionRadius)
+            {
+                currentState = AIState.Fleeing;
+                return; // Stops evaluating further conditions, safety takes precedence!
+            }
         }
 
         // EVALUATION 2: Energy level (Resting)
@@ -74,7 +84,7 @@ public class SmartAI : MonoBehaviour
             return;
         }
         // EVALUATION 4 : Resource availability (Gathering)
-        if (currentState == AIState.Gathering && resourceNode.IsEmpty())
+        if (currentState == AIState.Gathering && EnvironmentSpawner.activeStars.Count == 0 && (resourceNode == null || resourceNode.IsEmpty()))
         {
             // If the resource node is empty and doesn"t need sleeping, the NPC will rest
             currentState = AIState.Resting; // Currently sending the NPC to the base to rest.
@@ -94,23 +104,30 @@ public class SmartAI : MonoBehaviour
         switch (currentState)
         {
             case AIState.Gathering:
-                debugText.text = " Status: Gathering\nWealth NPC: " + Mathf.Round(wealth) + "\nResources Left: " + Mathf.Round(resourceNode.currentResources);
-                // The NPC moves autonomously towards the resource area
-                agent.SetDestination(resourceNode.transform.position);
-                
-                // If it arrives, it gathers resources
-                if (!agent.pathPending && agent.remainingDistance < 1.5f && !resourceNode.IsEmpty())
+                findClosestStar();
+
+                if(targetStar != null)
                 {
-                    float gathered = resourceNode.Harvest(Time.deltaTime * 5f);
-                    wealth += gathered;
+                    debugText.text = "Status: Hunting Stars\nCollected: " + Mathf.Round(wealth) + "\nStars Left: " + EnvironmentSpawner.activeStars.Count;
+                    agent.SetDestination(targetStar.position);
+                }
+                else if (resourceNode != null && !resourceNode.IsEmpty())
+                {
+                    debugText.text = "Status: Harvesting Tree\nCollected: " + Mathf.Round(wealth) + "\nTree Resources: " + Mathf.Round(resourceNode.currentResources);
+                    agent.SetDestination(resourceNode.transform.position);
+
+                    if (!agent.pathPending && agent.remainingDistance < 1.8f)
+                    {
+                        float gathered = resourceNode.Harvest(Time.deltaTime * 5f);
+                        wealth += gathered;
+                    }
                 }
                 break;
 
             case AIState.Resting:
                 // Update the UI
                 debugText.text = " Status: Resting\nEnergy: " + Mathf.Round(energy);
-                // The NPC goes to the rest zone
-                agent.SetDestination(restZone.position);
+                if (restZone != null) agent.SetDestination(restZone.position);
                 
                 // If it arrives, it replenishes its energy
                 if (!agent.pathPending && agent.remainingDistance < 1.5f)
@@ -122,13 +139,52 @@ public class SmartAI : MonoBehaviour
             case AIState.Fleeing:
                 // Update the UI
                 debugText.text = " Status: Fleeing\nEnergy: " + Mathf.Round(energy);
+                if (playerTransform != null)
+                {
                 // Calculate the opposite direction from the player (Fleeing)
                 Vector3 dirToPlayer = transform.position - playerTransform.position;
-                Vector3 fleeTarget = transform.position + dirToPlayer.normalized * 5f;
+                Vector3 fleeTarget = transform.position + dirToPlayer.normalized * 6f;
                 
                 // Give the NavMeshAgent a destination to run to
                 agent.SetDestination(fleeTarget);
+                }
                 break;
+        }
+    }
+    void FindClosestStar()
+    {
+        if (EnvironmentSpawner.activeStars.Count == 0)
+        {
+            targetStar = null;
+            return;
+        }
+
+        float closestDistance = Mathf.Infinity;
+        Transform closestStar = null;
+
+        foreach (Transform star in EnvironmentSpawner.activeStars)
+        {
+            if (star == null) continue; // Skip if the star has been destroyed
+            float distance = Vector3.Distance(transform.position, star.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestStar = star;
+            }
+        }
+        targetStar = closestStar;
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if the NPC collides with a star
+        if (other.CompareTag("Star"))
+        {
+           wealth++;
+           if (EnvironmentSpawner.activeStars.Contains(other.transform))
+           {
+               EnvironmentSpawner.activeStars.Remove(other.transform);
+           }
+           Destroy(other.gameObject);
         }
     }
 }

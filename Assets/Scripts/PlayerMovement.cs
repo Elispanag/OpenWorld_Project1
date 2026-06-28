@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private float inputZ;
 
     private Animator anim;
+    private Vector3 moveDirection;
 
     void Start()
     {
@@ -25,10 +26,10 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-
+        // ANIMATION
         bool walking = (Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0);
-
         anim.SetBool("isWalking", walking);
+
         // GET INPUT (Input) every frame
         // "Horizontal" corresponds to keys A/D or Left/Right arrow keys (-1 to 1)
         inputX = Input.GetAxisRaw("Horizontal");
@@ -36,14 +37,15 @@ public class PlayerMovement : MonoBehaviour
         // "Vertical" corresponds to keys W/S or Up/Down arrow keys (-1 to 1)
         inputZ = Input.GetAxisRaw("Vertical");
 
-        Vector3 moveDirection = new Vector3(inputX, 0f, inputZ);
-
+        // MOVEMENT
+        Vector3 moveDirection  = new Vector3(inputX, 0f, inputZ).normalized;
+        // If the player is moving, we rotate the player to face the direction of movement and translate the player in that direction
         if (moveDirection != Vector3.zero)
         {
-            // Rotate the player to face the direction of movement
             transform.forward = Vector3.Slerp(transform.forward, moveDirection, Time.deltaTime * 12f);
+            transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
         }
-    }
+    }   
 
     void FixedUpdate()
     {
@@ -55,5 +57,14 @@ public class PlayerMovement : MonoBehaviour
 
         // We apply the movement to the Rigidbody's velocity, maintaining gravity (rb.velocity.y)
         rb.linearVelocity = new Vector3(moveDirection.x * moveSpeed, rb.linearVelocity.y, moveDirection.z * moveSpeed);
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if the player collides with a heart
+        if (other.CompareTag("Heart"))
+        {
+            Debug.Log("Player collected a heart!");
+            Destroy(other.gameObject);
+        }
     }
 }
