@@ -69,6 +69,10 @@ public class SmartAI : MonoBehaviour
                 return; // Stops evaluating further conditions, safety takes precedence!
             }
         }
+        else
+        {
+            Debug.LogWarning("Player Transform is not assigned in the SmartAI script.");
+        }
 
         // EVALUATION 2: Energy level (Resting)
         if (energy <= 20f && currentState != AIState.Resting)
@@ -184,6 +188,7 @@ public class SmartAI : MonoBehaviour
            {
                EnvironmentSpawner.activeStars.Remove(other.transform);
            }
+           GameManager.Instance.CheckWinCondition(0, wealth); // Check win condition for the NPC
            Destroy(other.gameObject);
         }
     }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 
 public class PlayerMovement : MonoBehaviour
@@ -15,6 +16,10 @@ public class PlayerMovement : MonoBehaviour
 
     private Animator anim;
     private Vector3 moveDirection;
+
+    [Header("Player Score UI")]
+    public TextMeshProUGUI playerScoreText; // Reference to the UI text that displays the player's score
+    private int heartsCollected = 0; // Variable to keep track of the number of hearts collected
 
     void Start()
     {
@@ -49,9 +54,7 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // MOVEMENT PHYSICS
-        // The FixedUpdate method is used for smooth movement through Rigidbody, independent of FPS
-        
+    
         // We calculate the direction based on where the world is facing (X and Z axes)
         Vector3 moveDirection = new Vector3(inputX, 0f, inputZ).normalized;
 
@@ -63,7 +66,15 @@ public class PlayerMovement : MonoBehaviour
         // Check if the player collides with a heart
         if (other.CompareTag("Heart"))
         {
-            Debug.Log("Player collected a heart!");
+            heartsCollected++;
+
+            // Update the UI text to show the new score
+            if (playerScoreText != null)
+            {
+                playerScoreText.text = "Hearts: " + heartsCollected;
+                
+            }
+            GameManager.Instance.CheckWinCondition(heartsCollected, 0); // Check win condition for the player
             Destroy(other.gameObject);
         }
     }
