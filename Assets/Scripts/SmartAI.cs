@@ -104,7 +104,7 @@ public class SmartAI : MonoBehaviour
         switch (currentState)
         {
             case AIState.Gathering:
-                findClosestStar();
+                FindClosestStar();
 
                 if(targetStar != null)
                 {

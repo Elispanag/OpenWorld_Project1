@@ -78,7 +78,7 @@ public class EnvironmentSpawner : MonoBehaviour
             {
                 float randomX = Random.Range(minX, maxX);
                 float randomZ = Random.Range(minZ, maxZ);
-                Vector3 spawnPosition = new Vector3(randomX, bounds.max.y + 0.5f, randomZ);
+                Vector3 spawnPosition = new Vector3(randomX, bounds.max.y + 1.5f, randomZ);
                 
                 GameObject spawnedHeart = Instantiate(heartPrefab, spawnPosition, Quaternion.identity);
                 spawnedHeart.tag = "Heart";
