@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI; //For NavMeshAgent movement
+using System.Collections.Generic; //For using lists
 using TMPro;
 
 public class SmartAI : MonoBehaviour
@@ -8,17 +9,22 @@ public class SmartAI : MonoBehaviour
     private NavMeshAgent agent;
     public Transform playerTransform;   // The position of the player
     public ResourceNode resourceNode; // Reference to the resource node
-    public Transform restZone;         // The position of the rest area
+
+    [Header("Rest Settings")]
+    public List<Transform> restZones = new List<Transform>(); // List of possible rest zones
     public TextMeshProUGUI debugText; //Connection to the 3D text on the screen
 
-    // --- AI STATS (Internal state of the AI) ---
+    // --- AI STATS ---
     [Header("AI Stats")]
-    public float speed = 4f;          // The speed of the NPC
+    public float speed = 6f;          // The speed of the NPC
     public float energy = 100f;        // The energy of the NPC (starts full)
     public float wealth = 0f;          // How many resources has collected
-    public float detectionRadius = 6f; // How close the player needs to be for the NPC to flee
+    public float detectionRadius = 4f; // How close the player needs to be for the NPC to flee
 
+    // --- INTERNAL TRACKING ---
     private Transform targetStar; // The closest star to the NPC
+    private Transform targetRestZone;   // The closest rest zone to the NPC
+
     // enumeration for the states of the NPC
     private enum AIState { Gathering, Resting, Fleeing }
     [SerializeField] private AIState currentState = AIState.Gathering;
@@ -38,7 +44,7 @@ public class SmartAI : MonoBehaviour
         // Decrease energy over time
         DecreaseEnergy();
 
-        // Main Decision Making Mechanism (Decision Making / State Machine)
+        // Main Decision Making Mechanism 
         EvaluateSituation();
 
         // Execute the decision
@@ -59,7 +65,7 @@ public class SmartAI : MonoBehaviour
     void EvaluateSituation()
     {
 
-        // EVALUATION 1: Player proximity (Safety)
+        // Player proximity (Safety)
         if (playerTransform != null)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
@@ -74,24 +80,26 @@ public class SmartAI : MonoBehaviour
             Debug.LogWarning("Player Transform is not assigned in the SmartAI script.");
         }
 
-        // EVALUATION 2: Energy level (Resting)
+        // Energy level (Resting)
         if (energy <= 20f && currentState != AIState.Resting)
         {
             currentState = AIState.Resting;
+            FindClosestRestZone();
             return;
         }
 
-        // EVALUATION 3: Energy level (Gathering)
+        // Energy level (Gathering)
         if (energy >= 100f && currentState == AIState.Resting)
         {
             currentState = AIState.Gathering;
             return;
         }
-        // EVALUATION 4 : Resource availability (Gathering)
+        // Resource availability (Gathering)
         if (currentState == AIState.Gathering && EnvironmentSpawner.activeStars.Count == 0 && (resourceNode == null || resourceNode.IsEmpty()))
         {
             // If the resource node is empty and doesn"t need sleeping, the NPC will rest
             currentState = AIState.Resting; // Currently sending the NPC to the base to rest.
+            FindClosestRestZone();
             return;
         }
 
@@ -124,33 +132,39 @@ public class SmartAI : MonoBehaviour
                     {
                         float gathered = resourceNode.Harvest(Time.deltaTime * 5f);
                         wealth += gathered;
+                        GameManager.Instance.CheckWinCondition(0, wealth); 
                     }
                 }
                 break;
 
             case AIState.Resting:
-                // Update the UI
-                debugText.text = " Status: Resting\nEnergy: " + Mathf.Round(energy);
-                if (restZone != null) agent.SetDestination(restZone.position);
-                
-                // If it arrives, it replenishes its energy
-                if (!agent.pathPending && agent.remainingDistance < 1.5f)
+                 
+                debugText.text = " Status: Heading to Rest Zone\nEnergy: " + Mathf.Round(energy);
+                // If the NPC has a target rest zone, it will move towards it
+                if (targetRestZone != null)
                 {
-                    energy += Time.deltaTime * 15f; // Replenishes quickly
+                    agent.SetDestination(targetRestZone.position);
+                }
+                // If the NPC has reached the rest zone, it will start to regain energy
+                if(!agent.pathPending && agent.remainingDistance < 1.5f)
+                {
+                
+                    debugText.text = " Status: Resting\nEnergy: " + Mathf.Round(energy);
+                    energy += Time.deltaTime * 15f; 
                 }
                 break;
-
+                
             case AIState.Fleeing:
                 // Update the UI
                 debugText.text = " Status: Fleeing\nEnergy: " + Mathf.Round(energy);
                 if (playerTransform != null)
                 {
-                // Calculate the opposite direction from the player (Fleeing)
-                Vector3 dirToPlayer = transform.position - playerTransform.position;
-                Vector3 fleeTarget = transform.position + dirToPlayer.normalized * 6f;
-                
-                // Give the NavMeshAgent a destination to run to
-                agent.SetDestination(fleeTarget);
+                    // Calculate the opposite direction from the player (Fleeing)
+                    Vector3 dirToPlayer = transform.position - playerTransform.position;
+                    Vector3 fleeTarget = transform.position + dirToPlayer.normalized * 6f;
+                    
+                    // Give the NavMeshAgent a destination to run to
+                    agent.SetDestination(fleeTarget);
                 }
                 break;
         }
@@ -177,6 +191,30 @@ public class SmartAI : MonoBehaviour
             }
         }
         targetStar = closestStar;
+    }
+
+    void FindClosestRestZone()
+    {
+        if (restZones == null || restZones.Count == 0)
+        {
+            targetRestZone = null;
+            return;
+        }
+
+        float closestDistance = Mathf.Infinity;
+        Transform closestRest = null;
+
+        foreach (Transform zone in restZones)
+        {
+            if (zone == null) continue; // Skip if the rest zone has been destroyed
+            float distance = Vector3.Distance(transform.position, zone.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestRest = zone;
+            }
+        }
+        targetRestZone = closestRest;
     }
     private void OnTriggerEnter(Collider other)
     {
