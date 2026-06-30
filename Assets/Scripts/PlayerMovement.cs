@@ -67,6 +67,7 @@ public class PlayerMovement : MonoBehaviour
         if (other.CompareTag("Heart"))
         {
             heartsCollected++;
+            GameManager.Instance.PlayHeartSound();
 
             // Update the UI text to show the new score
             if (playerScoreText != null)
@@ -75,6 +76,7 @@ public class PlayerMovement : MonoBehaviour
                 
             }
             GameManager.Instance.CheckWinCondition(heartsCollected, 0); // Check win condition for the player
+            
             Destroy(other.gameObject);
         }
     }

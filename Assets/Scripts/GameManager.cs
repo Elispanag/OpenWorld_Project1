@@ -5,9 +5,16 @@ public class GameManager : MonoBehaviour
 {
     // Singleton pattern 
     public static GameManager Instance; 
+
     [Header("UI References")]
     public GameObject winPanel;
     public GameObject losePanel;
+
+    [Header("Audio Settings")]
+    public AudioClip heartSFX;
+    public AudioClip starSFX;
+
+    private AudioSource audioSource;
     private bool isGameOver = false; // Flag to check if the game is over
 
     void Awake()
@@ -21,6 +28,8 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject); // Ensure only one instance exists
         }
+
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -31,6 +40,22 @@ public class GameManager : MonoBehaviour
             RestartGame();
         }
     }
+
+    public void PlayHeartSound()
+    {
+        if (audioSource != null && heartSFX != null)
+        {
+            audioSource.PlayOneShot(heartSFX);
+        }
+    }
+
+    public void PlayStarSound()
+    {
+        if (audioSource != null && starSFX != null)
+        {
+            audioSource.PlayOneShot(starSFX);
+        }
+    }
     public void PlayerWon()
     {
         
@@ -38,6 +63,8 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         // Activate win panel
         if (winPanel != null) winPanel.SetActive(true);
+        // Stop the music
+        if (audioSource != null) audioSource.Stop();
         Time.timeScale = 0f; // Pause the game
     }
 
@@ -47,6 +74,8 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         // Activate lose panel
         if (losePanel != null) losePanel.SetActive(true);
+        // Stop the music
+        if (audioSource != null) audioSource.Stop();
         Time.timeScale = 0f; // Pause the game
     }
 

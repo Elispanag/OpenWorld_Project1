@@ -218,6 +218,7 @@ public class SmartAI : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
+        GameManager.Instance.PlayStarSound();
         // Check if the NPC collides with a star
         if (other.CompareTag("Star"))
         {
