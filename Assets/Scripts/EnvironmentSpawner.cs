@@ -11,6 +11,14 @@ public class EnvironmentSpawner : MonoBehaviour
     [Header("The ground")]
     public GameObject groundObject;
 
+    [Header("Spawn Limits (Safe Area)")]
+    [Tooltip (" Min and Max values of X and Z where objects can be spawned")]
+    public float minX = -125f;
+    public float maxX = 125f;
+    public float minZ = -125f;
+    public float maxZ = 125f;
+
+
     [Header("Spawn Settings")]
     public int totalObjectsToSpawn = 200; 
     public int totalHearts = 10;
@@ -34,14 +42,9 @@ public class EnvironmentSpawner : MonoBehaviour
         Renderer groundRenderer = groundObject.GetComponent<Renderer>();
         Bounds bounds = groundRenderer.bounds;
 
-        // Calculate the minimum and maximum X and Z coordinates for spawning
-        float minX = bounds.min.x + 2f;
-        float maxX = bounds.max.x - 2f;
-        float minZ = bounds.min.z + 2f;
-        float maxZ = bounds.max.z - 2f;
-
-        // We create an empty parent for better organization in the Hierarchy!
+        // Create an empty parent for better organization in the Hierarchy
         GameObject envParent = new GameObject("Spawned_Environment");
+
         if (environmentPrefabs != null && environmentPrefabs.Length> 0)
         {
             for (int i = 0; i < totalObjectsToSpawn; i++)
