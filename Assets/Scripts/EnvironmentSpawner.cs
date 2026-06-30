@@ -34,6 +34,7 @@ public class EnvironmentSpawner : MonoBehaviour
 
     void SpawnEnvironment()
     {
+        
         if (groundObject == null)
         {
             Debug.LogError("Ground object is not assigned in the EnvironmentSpawner script.");

@@ -25,7 +25,6 @@ public class ResourceNode : MonoBehaviour
             currentResources += Time.deltaTime * 2f;
             // Changes the color back to white when replenishing
             GetComponent<Renderer>().material.color = Color.white;
-            // Changes the scale of the cube based on the percentage of resources left
             float resourcePercentage = currentResources / maxResources;
             transform.localScale = originalScale * Mathf.Max(resourcePercentage, 0.1f);
             // If it is completely replenished, it stops
@@ -43,7 +42,6 @@ public class ResourceNode : MonoBehaviour
         if (currentResources <= 0) return 0;
         // Reduce the amount of resources
         currentResources -= amount;
-        // Calculate the new scale of the cube (it shrinks as resources are taken)
         float resourcePercentage = currentResources / maxResources;
         transform.localScale = originalScale * Mathf.Max(resourcePercentage, 0.1f); // Prevents the scale from going to 0 
         

@@ -31,7 +31,7 @@ public class SmartAI : MonoBehaviour
 
     void Start()
     {
-        // We get the NavMeshAgent component that we attached to the object
+        // Gets the NavMeshAgent component that we attached to the object
         agent = GetComponent<NavMeshAgent>();
         if (agent != null)
         {

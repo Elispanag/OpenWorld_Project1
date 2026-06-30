@@ -35,11 +35,11 @@ public class PlayerMovement : MonoBehaviour
         bool walking = (Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0);
         anim.SetBool("isWalking", walking);
 
-        // GET INPUT (Input) every frame
-        // "Horizontal" corresponds to keys A/D or Left/Right arrow keys (-1 to 1)
+        // INPUT
+        // "Horizontal" corresponds to keys A/D or Left/Right arrow keys 
         inputX = Input.GetAxisRaw("Horizontal");
         
-        // "Vertical" corresponds to keys W/S or Up/Down arrow keys (-1 to 1)
+        // "Vertical" corresponds to keys W/S or Up/Down arrow keys 
         inputZ = Input.GetAxisRaw("Vertical");
 
         // MOVEMENT
@@ -55,10 +55,10 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
     
-        // We calculate the direction based on where the world is facing (X and Z axes)
+        // calculate the direction based on where the world is facing (X and Z axes)
         Vector3 moveDirection = new Vector3(inputX, 0f, inputZ).normalized;
 
-        // We apply the movement to the Rigidbody's velocity, maintaining gravity (rb.velocity.y)
+        // apply the movement to the Rigidbody's velocity, maintaining gravity (rb.velocity.y)
         rb.linearVelocity = new Vector3(moveDirection.x * moveSpeed, rb.linearVelocity.y, moveDirection.z * moveSpeed);
     }
     private void OnTriggerEnter(Collider other)
