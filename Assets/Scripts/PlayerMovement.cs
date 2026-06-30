@@ -50,6 +50,19 @@ public class PlayerMovement : MonoBehaviour
             transform.forward = Vector3.Slerp(transform.forward, moveDirection, Time.deltaTime * 12f);
             transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
         }
+
+        // If the player falls off ground
+        if (transform.position.y < -5f)
+        {
+            // Teleport back to the center 
+            transform.position = new Vector3(0f, 2f, 0f);
+            // Setting fall speed to zero
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+        }
     }   
 
     void FixedUpdate()

@@ -169,6 +169,8 @@ public class SmartAI : MonoBehaviour
                 break;
         }
     }
+    
+    // Finds the closest star
     void FindClosestStar()
     {
         if (EnvironmentSpawner.activeStars.Count == 0)
@@ -192,7 +194,8 @@ public class SmartAI : MonoBehaviour
         }
         targetStar = closestStar;
     }
-
+    
+    // Finds the closest rest zone 
     void FindClosestRestZone()
     {
         if (restZones == null || restZones.Count == 0)
